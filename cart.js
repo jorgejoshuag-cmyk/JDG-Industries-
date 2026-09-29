@@ -17,7 +17,7 @@ function renderCart(){
     const product=products[item.material],row=document.createElement('div');row.className='cart-row';
     const details=document.createElement('div'),h=document.createElement('h3'),price=document.createElement('p');h.textContent=product.name;price.textContent=money(product.price)+'/ton · Load '+(index+1);details.append(h,price);
     const label=document.createElement('label');label.textContent='Tons';const input=document.createElement('input');Object.assign(input,{type:'number',min:'.5',max:'22',step:'.5',value:String(item.tons),required:true});input.inputMode='decimal';input.setAttribute('aria-label','Tons for load '+(index+1)+', '+product.name);label.append(input);
-    input.addEventListener('input',()=>{$('request-cart').disabled=!!cartDialog.querySelector('input:invalid')});
+    input.addEventListener('input',()=>{$('request-cart').disabled=!!cartDialog.querySelector('input:invalid');$('checkout-cart').disabled=$('request-cart').disabled});
     input.addEventListener('change',()=>{if(!input.checkValidity()){input.reportValidity();return}item.tons=Number(input.value);persistCart();renderCart()});
     const subtotal=document.createElement('small');subtotal.textContent=money(item.tons*product.price)+' material + '+money(deliveryFor(item.tons))+' delivery + $25.00 fuel';
     const remove=document.createElement('button');remove.type='button';remove.className='remove-load';remove.textContent='Remove load';remove.setAttribute('aria-label','Remove load '+(index+1)+', '+product.name);remove.addEventListener('click',()=>{cart.splice(index,1);persistCart();renderCart();const next=container.querySelectorAll('.remove-load')[Math.min(index,cart.length-1)];(next||$('continue-shopping')).focus();$('cart-status').textContent='Load removed from cart.'});
@@ -25,7 +25,7 @@ function renderCart(){
   });
   const t=cartTotals(),totals=$('cart-totals');totals.replaceChildren();
   for(const [name,value] of [['Material',t.material],['Delivery ('+cart.length+' loads)',t.delivery],['Fuel',t.fuel],['Estimated subtotal',t.material+t.delivery+t.fuel]]){const div=document.createElement('div');if(name==='Estimated subtotal')div.className='cart-grand';const label=document.createElement('span'),amount=document.createElement('strong');label.textContent=name;amount.textContent=money(value);div.append(label,amount);totals.append(div)}
-  totals.hidden=!cart.length;$('cart-disclaimer').hidden=!cart.length;$('request-cart').disabled=!cart.length;
+  totals.hidden=!cart.length;$('cart-disclaimer').hidden=!cart.length;$('request-cart').disabled=!cart.length;$('checkout-cart').disabled=!cart.length;
   if(quotingCart)setCartQuote(true);
 }
 function openCart(){renderCart();cartDialog.showModal();document.body.style.overflow='hidden'}

@@ -1,0 +1,1 @@
+{"name":"jdg-aggregates","version":"1.1.0","private":true,"engines":{"node":">=22"},"scripts":{"test":"node --test tests/*.test.cjs"},"dependencies":{"stripe":"22.6.0"}}

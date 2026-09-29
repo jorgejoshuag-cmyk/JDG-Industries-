@@ -36,3 +36,14 @@ The quote form now collects buyer contact details, paying party, full jobsite lo
 Before buying material or dispatching, JDG must independently confirm the payer and company authority, approved delivery address, recipient, itemized total and actual payment status in its payment provider. A customer's payment screenshot, email, form acknowledgment or card authorization alone is insufficient. Address/payer/recipient changes require reapproval. Record the delivery ticket, recipient, time, location and appropriate delivery photos. Customer identity documents and card details must not be requested through this email/text form.
 
 Stripe connection checks found live card and Apple Pay availability. No live Stripe Tax registrations were recorded at the time of review. This release does not activate Stripe Checkout, automatic tax, 3D Secure or Radar rules. The connector does not expose Radar rule editing, and the Vercel connector did not expose the site's project settings. Finish and verify those controls before making payment-protection or online-checkout claims. A successful payment or 3DS authentication does not guarantee protection against every dispute.
+
+## Purchase flow release, 2026-09-29
+
+- Header estimate link, product-level 11/22-ton selectors, Buy now, Add to cart, cart checkout and arbitrary half-ton single loads.
+- Stripe-hosted Checkout server endpoint with authoritative prices, per-load delivery/fuel, idempotency, 3DS request and hold-for-review metadata.
+- Signed webhook records verified payment and review evidence in Stripe PaymentIntent metadata. It NEVER purchases material, books delivery or releases dispatch. Stripe is the durable payment/order record for this integration; there is no separate order database or driver app.
+- Customer status page retrieves payment status from Stripe and has no fulfillment side effects.
+- Checkout remains unavailable until all production requirements in `CHECKOUT-SETUP.md` are completed and verified. Customers can preserve their cart and request an estimate.
+- `npm test` covers pricing, hostile inputs, request origin, launch lock, signature validation, paid/unpaid events, address mismatch and dispatch hold.
+
+Earlier notes describe the previous quote-only release. Payment processing is implemented in source but **not activated** as of this release. No live key, webhook registration or tax configuration has been installed by this commit.

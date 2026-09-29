@@ -44,3 +44,25 @@ body{line-height:1.6}button:disabled{opacity:.5;cursor:not-allowed;transform:non
 @media(max-width:1000px){.hero h1{font-size:62px}.links{gap:15px}.hero-copy{padding-left:24px;padding-right:24px}.brand small{display:none}.products{grid-template-columns:repeat(2,1fr)}.product p{min-height:0}.hero-foot{gap:15px}}
 @media(max-width:700px){.nav{height:74px}.brand span{font-size:.6875rem}.links{gap:12px}.links .btn{font-size:.8125rem;padding:10px 12px;min-height:44px}.links .cart-trigger{display:none}.topbar{font-size:.75rem}.hero{grid-template-columns:1fr;min-height:0}.hero-copy{padding:36px 22px 40px}.hero h1{font-size:clamp(50px,13.5vw,72px)}.hero-copy>p{font-size:1rem}.hero>.photo{height:300px}.hero-foot{font-size:.8125rem}.hero-actions .btn{width:auto}.patriot-badge span{font-size:.8125rem}.stat,.stat:first-child{padding:22px 12px}.stat strong{font-size:1.125rem;letter-spacing:-.025em}.stat span{font-size:.75rem}.products{grid-template-columns:1fr}.product{padding:24px}.product-top{display:flex;margin-bottom:18px}.material-type{font-size:.75rem}.product h3{font-size:1.375rem;min-height:0}.product p{font-size:.9375rem;min-height:0}.product-bottom{flex-wrap:nowrap}.pick{font-size:.875rem}.section-head p{font-size:1rem}.section-head h2{font-size:2.125rem}.calc{padding:24px 20px}.calc-row{grid-template-columns:1fr 1fr;gap:12px}.bill .total strong{font-size:1.75rem}.bill div{font-size:.875rem}.bill .total{gap:15px}.pricing-banner{align-items:start;flex-direction:column}.pricing-banner a{white-space:normal}.gallery-feature{height:320px}.phone-big{font-size:1.6rem}.quote-copy .email{font-size:1rem}.form-actions .btn{width:100%}.mobile-bar{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:7px;padding:9px 10px calc(9px + env(safe-area-inset-bottom));background:white}.mobile-bar .btn{font-size:.8125rem;padding:10px 7px;min-height:48px;gap:3px}body{padding-bottom:calc(75px + env(safe-area-inset-bottom))}.footer-bottom{font-size:.8125rem}.footer-links{flex-wrap:wrap;font-size:.875rem}.hero .photo-caption>span{display:none}#cart-dialog{padding:24px 20px;padding-bottom:calc(24px + env(safe-area-inset-bottom))}.cart-row{grid-template-columns:1fr 90px}.cart-heading{gap:12px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* Purchase flow: navy, white and black, with equal access to estimates. */
+.product-purchase{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}
+.product-purchase label,.checkout-form label:not(.check-label){display:block;font-size:14px;font-weight:700;margin-bottom:7px}
+.product-purchase select{font-size:16px;margin-bottom:12px}
+.purchase-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.purchase-actions .btn{min-width:0;padding:13px 8px;font-size:14px;letter-spacing:0;text-transform:none;margin:0}
+.estimate-quote{display:block;margin:20px auto 0;font-size:14px}
+#checkout-dialog{border:0;width:min(640px,calc(100% - 24px));max-height:90dvh;padding:30px;color:var(--navy);background:#fff;overflow:auto}
+#checkout-dialog::backdrop{background:rgba(0,0,0,.62)}
+.checkout-summary{padding:18px;background:#f1f4f8;margin:20px 0}
+.checkout-summary p{font-size:16px;margin:0 0 8px}.checkout-summary strong{display:block;font-size:18px;margin-top:14px}
+#checkout-availability{font-size:16px;line-height:1.6}
+.checkout-form{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px}
+.checkout-form[hidden]{display:none}.checkout-form .full{grid-column:1/-1}
+.checkout-form .check-label{font-size:14px;text-transform:none;letter-spacing:0;line-height:1.55}
+.checkout-form .field-note{font-size:14px;line-height:1.5}
+.checkout-pay{width:100%;font-size:16px;text-transform:none;letter-spacing:0}
+.checkout-error{border-left:3px solid #0a1e3c;background:#f1f4f8;padding:12px;font-size:15px;line-height:1.5}
+.checkout-alternative{border-top:1px solid var(--line);margin-top:24px;padding-top:20px;display:flex;gap:16px;flex-wrap:wrap;font-size:14px}
+.cart-actions{flex-wrap:wrap}.cart-actions .btn{font-size:14px;text-transform:none;letter-spacing:0}
+@media(max-width:480px){#checkout-dialog{padding:22px 18px}.checkout-form{gap:14px}.purchase-actions .btn{min-height:46px}.checkout-alternative{display:grid}.cart-actions{display:grid;grid-template-columns:1fr}.cart-actions .btn{width:100%}}

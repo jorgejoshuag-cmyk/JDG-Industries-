@@ -1,0 +1,6 @@
+.git
+node_modules
+tests
+README.md
+CHECKOUT-SETUP.md
+.env*
