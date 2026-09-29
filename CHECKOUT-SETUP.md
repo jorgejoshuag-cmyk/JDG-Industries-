@@ -4,7 +4,7 @@ Current state: code and purchase UI are implemented. Live checkout is intentiona
 
 ## Required production settings
 
-Set sensitive values in the existing Vercel project's Production environment. Do not put credentials in this public repository, email or chat.
+Set sensitive values in the `index-v2` Vercel project's Production environment. This project owns `www.jdgindustries.com`; the apex redirects there. The separate `jdg` project only owns `jdg-seven.vercel.app`. Dashboard access was verified; the production project currently has no environment variables. Do not put credentials in this public repository, email or chat.
 
 - `STRIPE_SECRET_KEY`: a restricted **live** key with Checkout Sessions write/read, PaymentIntents read/write, Charges read (for expanded review evidence), Account read, Tax Settings read, Tax Registrations read and Payment Method Configurations read. Test minimum permissions in sandbox first. Configure a separate sandbox key and sandbox account ID in the Vercel Preview environment. Live keys are rejected outside Production; test keys are rejected in Production. Preview redirects use the trusted Vercel deployment hostname.
 - `STRIPE_ACCOUNT_ID`: `acct_1UL2qLPUZr8YhMQy` for the verified JDG Industries LLC live account.

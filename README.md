@@ -10,10 +10,10 @@ Public website for JDG Aggregates, a JDG Industries LLC brand serving Miami-Dade
 - `order-verification.js`: buyer, payer and delivery-recipient fields included in single-load and cart quote requests.
 - `robots.txt` / `sitemap.xml`: public crawler entry points.
 - `assets/`: optimized fleet photos and American flag.
-- Static HTML. No package installation or build step is required.
-- Intended Vercel project: `jdg` in the JDG Industries team.
+- Static HTML with Vercel Node.js payment endpoints. `npm install` installs the Stripe server SDK; no frontend build is required.
+- Production Vercel project: `index-v2` in the JDG Industries team (verified in the Dashboard). The separate `jdg` project deploys the same repository but does not own the public custom domain.
 - Intended production branch: `main`.
-- Existing production address: https://jdg-seven.vercel.app
+- Existing production address: https://www.jdgindustries.com/
 
 The `main` branch deploys through the existing GitHub/Vercel connection. Production is https://www.jdgindustries.com/. Verify the new commit has a successful Vercel status and that production serves it after each release.
 
@@ -21,7 +21,7 @@ The `main` branch deploys through the existing GitHub/Vercel connection. Product
 
 The brand remains JDG Aggregates. The website palette is white, black and navy; full color is reserved for the American flag.
 
-September 2026 customer material prices exclude delivery, fuel, tax, and additional jobsite charges. Confirm prices before changing them. The quote form opens the visitor's email or messaging app; the visitor must send the request there. The cart stores only material IDs and quantities in the visitor’s browser. Each line represents a separate load of up to 22 tons; delivery and fuel are calculated per load. No backend, payment processing, or automatic order booking is included. Visa and Apple Pay checkout require a verified merchant integration and confirmed fulfillment/tax terms. Never add payment claims until the complete checkout has been tested.
+September 2026 customer material prices exclude delivery, fuel, tax, and additional jobsite charges. Confirm prices before changing them. The quote form opens the visitor's email or messaging app; the visitor must send the request there. The cart stores only material IDs and quantities in the visitor’s browser. Each line represents a separate load of up to 22 tons; delivery and fuel are calculated per load. The payment backend is implemented but disabled until the credentials, webhook and confirmed tax configuration are installed. No automatic order booking or dispatch is implemented. Never claim that live payments are active before the complete checkout has been verified.
 
 Only public website assets belong here. Do not commit credentials, supplier cost sheets, private reports, customer requests, or environment files.
 
