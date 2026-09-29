@@ -1,0 +1,34 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+const {estimate,products}=require('../assets/catalog');
+const {configuration,validateOrder,buildLineItems}=require('../lib/payment');
+const {createHandler}=require('../api/checkout');
+const {createHandler:hookHandler}=require('../api/webhook');
+const buyer={name:'Checkout Tester',phone:'9545550123',email:'test@example.com',address:'Test address',city:'Test city',zip:'33027',date:'2099-09-30',notes:''};
+const cfg={skus:products.map(p=>p.id),zones:{'33027':'Broward'},taxCodes:{material:'test-code',delivery:'test-code',fuel:'test-code'}};
+const order={acknowledged:true,lines:[{id:'stone-57',tons:22,loads:1}],buyer,requestId:'11111111-1111-4111-8111-111111111111'};
+function response(){return{headers:{},setHeader(k,v){this.headers[k]=v},end(s){this.data=JSON.parse(s)}}}
+test('22 tons #57 has separate material, delivery and fuel',()=>{const e=estimate(order.lines);assert.equal(e.material,74800);assert.equal(e.delivery,18500);assert.equal(e.fuel,2500);assert.equal(e.subtotal,95800)});
+test('half load uses $145 delivery',()=>{assert.equal(estimate([{id:'stone-57',tons:11,loads:1}]).subtotal,54400)});
+test('delivery tier changes above 11 tons',()=>{assert.equal(estimate([{id:'stone-57',tons:11.5,loads:1}]).delivery,18500)});
+test('three full loads incur three delivery and fuel charges',()=>{assert.equal(estimate([{id:'stone-57',tons:22,loads:3}]).subtotal,287400)});
+test('different materials each incur a delivery',()=>{assert.equal(estimate([...order.lines,{id:'fill-screenings',tons:11,loads:1}]).delivery,33000)});
+test('half-ton pricing has no rounding drift',()=>{assert.equal(estimate([{id:'stone-67',tons:.5,loads:1}]).material,1775)});
+test('tampered client price ignored',()=>{assert.equal(estimate([{...order.lines[0],cents:1,price:1}]).material,74800)});
+test('invalid tonnage rejected',()=>{for(const tons of [0,-1,22.5,NaN,Infinity,1.1,'22',null])assert.throws(()=>estimate([{id:'stone-57',tons,loads:1}]))});
+test('duplicate and unknown materials rejected',()=>{assert.throws(()=>estimate([...order.lines,...order.lines]));assert.throws(()=>estimate([{id:'fake',tons:22,loads:1}]))});
+test('invalid load count rejected',()=>{for(const loads of [0,-1,11,1.5,'1'])assert.throws(()=>estimate([{id:'stone-57',tons:22,loads}]))});
+test('no credentials means no checkout',()=>{assert.equal(configuration({}).enabled,false)});
+test('out-of-area payment blocked',()=>{assert.throws(()=>validateOrder({...order,buyer:{...buyer,zip:'90210'}},cfg),/ZIP/)});
+test('unapproved SKU blocked',()=>{assert.throws(()=>validateOrder(order,{...cfg,skus:[]}),/confirmed quote/)});
+test('consent required',()=>{assert.throws(()=>validateOrder({...order,acknowledged:false},cfg))});
+test('valid data accepted and canonicalized',()=>{assert.equal(validateOrder(order,cfg).order.subtotal,95800)});
+test('Stripe lines sum to the displayed subtotal',()=>{const e=estimate([{id:'stone-67',tons:11.5,loads:2},{id:'fill-screenings',tons:22,loads:1}]);assert.equal(buildLineItems(e,cfg).reduce((s,l)=>s+l.price_data.unit_amount*l.quantity,0),e.subtotal)});
+test('capabilities returns disabled without Stripe calls',async()=>{const res=response();await createHandler({env:{},stripeFactory:()=>{throw Error('Should not run')}})({method:'GET',url:'/api/checkout'},res);assert.equal(res.data.checkoutEnabled,false)});
+test('POST fails closed while setup missing',async()=>{const res=response();await createHandler({env:{}})({method:'POST',headers:{},body:order},res);assert.equal(res.statusCode,503)});
+test('fake payment return does not report paid',async()=>{const res=response();await createHandler({env:{}})({method:'GET',url:'/api/checkout?session_id=not-a-session'},res);assert.equal(res.statusCode,400)});
+test('webhook rejects unsigned requests',async()=>{const res=response();const fake={webhooks:{constructEvent(){throw Error('bad signature')}}};await hookHandler({env:{STRIPE_SECRET_KEY:'test-fixture',STRIPE_WEBHOOK_SECRET:'fixture'},stripeFactory:()=>fake})({method:'POST',headers:{},body:Buffer.from('{}')},res);assert.equal(res.statusCode,400)});
+test('paid webhook records pending dispatch only once',async()=>{let updates=0,verified=false;const fake={webhooks:{constructEvent:()=>({id:'evt_fixture',type:'checkout.session.completed',data:{object:{id:'cs_test_fixture'}}})},checkout:{sessions:{retrieve:async()=>({id:'cs_test_fixture',metadata:{source:'jdg-web-v1'},payment_status:'paid',payment_intent:'pi_fixture'})}},paymentIntents:{retrieve:async()=>({metadata:{jdg_payment_verified:String(verified)}}),update:async(id,data)=>{updates++;verified=true;assert.equal(data.metadata.jdg_order_status,'paid_pending_dispatch')}}};const handler=hookHandler({env:{STRIPE_SECRET_KEY:'test-fixture',STRIPE_WEBHOOK_SECRET:'fixture'},stripeFactory:()=>fake});for(let i=0;i<2;i++){const res=response();await handler({method:'POST',headers:{},body:Buffer.from('{}')},res);assert.equal(res.statusCode,200)}assert.equal(updates,1)});
+
+test('malformed delivery-zone configuration fails closed',()=>{for(const z of ['null','[]','invalid'])assert.equal(configuration({JDG_DELIVERY_ZONES:z}).enabled,false)});
+test('impossible calendar date rejected',()=>{assert.throws(()=>validateOrder({...order,buyer:{...buyer,date:'2099-02-30'}},cfg))});

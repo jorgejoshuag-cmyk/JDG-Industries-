@@ -1,0 +1,9 @@
+{
+  "name":"jdg-aggregates-store",
+  "version":"1.0.0",
+  "private":true,
+  "description":"JDG public storefront and gated Stripe Checkout integration",
+  "engines":{"node":"22.x"},
+  "scripts":{"test":"node --test tests/*.test.js"},
+  "dependencies":{"stripe":"22.6.0"}
+}
