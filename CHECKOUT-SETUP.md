@@ -1,34 +1,34 @@
 # Activate JDG checkout
 
-Current state: code and purchase UI are implemented. Live checkout is intentionally disabled. The connected Stripe account supports Apple Pay, but the website still needs its own restricted server key, webhook and approved tax setup. ChatGPT's Stripe connection is not a website credential.
+Code and purchase UI are implemented behind a configuration and merchant-readiness gate. Before activation, verify the approved restricted server key, webhook signing-secret configuration, merchant readiness and tax setup. ChatGPT's Stripe connection is not a website credential. Account-specific verification status belongs in private operational records.
 
 ## Required production settings
 
-Set sensitive values in the `index-v2` Vercel project's Production environment. This project owns `www.jdgindustries.com`; the apex redirects there. The separate `jdg` project only owns `jdg-seven.vercel.app`. Dashboard access was verified; the production project currently has no environment variables. Do not put credentials in this public repository, email or chat.
+Set sensitive values through an approved user handoff in the `index-v2` Vercel project's Production environment. This project owns `www.jdgindustries.com`; the apex redirects there. The separate `jdg` project only owns `jdg-seven.vercel.app`. Inspect configuration names without exposing secret values. Do not put credentials in this public repository, email or chat.
 
 - `STRIPE_SECRET_KEY`: a restricted **live** key with Checkout Sessions write/read, PaymentIntents read/write, Charges read (for expanded review evidence), Account read, Tax Settings read, Tax Registrations read and Payment Method Configurations read. Test minimum permissions in sandbox first. Configure a separate sandbox key and sandbox account ID in the Vercel Preview environment. Live keys are rejected outside Production; test keys are rejected in Production. Preview redirects use the trusted Vercel deployment hostname.
-- `STRIPE_ACCOUNT_ID`: `acct_1UL2qLPUZr8YhMQy` for the verified JDG Industries LLC live account.
+- `STRIPE_ACCOUNT_ID`: the expected live Stripe account ID, verified through the approved user handoff. Use the isolated sandbox account ID for Preview.
 - `STRIPE_WEBHOOK_SECRET`: the signing secret from the live webhook configured below.
 - `STRIPE_MATERIAL_TAX_CODE`, `STRIPE_DELIVERY_TAX_CODE`, `STRIPE_FUEL_TAX_CODE`: confirmed applicable Stripe tax codes. Do not guess. Confirm classification with JDG and its tax advisor.
 - `CHECKOUT_ENABLED`: keep `false` until the full test and configuration checks below pass, then set `true` and redeploy.
 
-No publishable key or Apple developer account is needed for the hosted Checkout approach. Apple Pay is presented by Stripe on eligible devices/browsers with an eligible wallet. Do not promise it will display on every browser.
+This integration creates a Checkout Session on the server and redirects to Stripe's hosted page. It does not require a publishable key, an Apple developer account or registration of the JDG domain for Apple Pay. Stripe's [Apple Pay guide](https://docs.stripe.com/apple-pay?platform=web) confirms the hosted Checkout configuration; its [domain registration guide](https://docs.stripe.com/payments/payment-methods/pmd-registration) applies to Elements and Checkout's embeddable payment form. Apple Pay is presented by Stripe on eligible devices/browsers with an eligible wallet. Do not promise it will display on every browser.
 
 ## Tax setup
 
-The live account had **no Stripe Tax registrations** when checked on September 29, 2026. Confirm JDG's existing Florida sales-tax registration before recording it in Stripe; adding it to Stripe does not register JDG with the state. Preserve the existing head-office address. Confirm material, delivery and fuel tax classification. Run a sandbox tax calculation for a Miami-Dade and Broward shipping address, then check live setup. Do not turn on live checkout until tax calculation is verified.
+Verify active Stripe Tax settings and an active Florida registration. Confirm JDG's existing Florida sales-tax registration before recording it in Stripe; adding it to Stripe does not register JDG with the state. Preserve the existing head-office address. Confirm material, delivery and fuel tax classification with JDG and its tax advisor. Run a sandbox tax calculation for a Miami-Dade and Broward shipping address, then check live setup. Do not turn on live checkout until tax calculation is verified.
 
 `verifyMerchant()` requires active Stripe Tax settings and an active Florida registration, checks account identity and payment capabilities, and prevents checkout when those checks fail. Each session enables automatic tax only after these checks.
 
 ## Webhook
 
-Register `https://www.jdgindustries.com/api/stripe-webhook` in the same live Stripe account for:
+Check for an existing `https://www.jdgindustries.com/api/stripe-webhook` endpoint in the same live Stripe account before creating another. Verify it is enabled for:
 
 - `checkout.session.completed`
 - `checkout.session.async_payment_succeeded`
 - `checkout.session.async_payment_failed`
 
-Install the returned signing secret in Vercel, redeploy, and verify a signed event reaches the endpoint. Also configure and test an isolated sandbox endpoint. The handler must receive the raw request body.
+Complete the approved signing-secret handoff in Vercel, redeploy after approval, and verify a signed event reaches the endpoint. Reuse a correct existing live endpoint rather than creating a duplicate. Also configure and test an isolated sandbox endpoint. The handler must receive the raw request body.
 
 ## Required verification before activation
 
@@ -37,7 +37,9 @@ Install the returned signing secret in Vercel, redeploy, and verify a signed eve
 3. Confirm unpaid or invalidly signed events produce no payment-verification write. Paid events must preserve the dispatch hold and surface address/card/risk issues for manual review. Verify retries and out-of-order events.
 4. Configure Radar in the Dashboard; its rules are not changed by this integration. Block high-risk charges and establish the review policy with JDG. A 3DS request is not guaranteed authentication or guaranteed liability shift. Wallets have different authentication evidence.
 5. Confirm the restricted key's permissions, live account, active tax registration, method configuration and webhook. Verify `/api/checkout-status` reports ready only after setup.
-6. Verify Apple Pay on a supported Apple device. Do not make a real charge without authorization for that test amount.
+6. Verify Apple Pay on a supported Apple device using confirmed sandbox/test credentials. An eligible saved Wallet card may be required, but Stripe test credentials prevent a real charge. Follow Stripe's [wallet testing guide](https://docs.stripe.com/testing/wallets). Never take a real payment as a test.
+
+Run `npm test` for offline coverage of authoritative totals, invalid orders, retry identifiers, pending submission locks, merchant-readiness gates and signed webhook handling. Passing these fixture-based tests does not replace the actual sandbox checkout, tax calculation, signed webhook delivery and Apple-device checks above.
 
 ## Dispatch workflow
 
