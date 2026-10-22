@@ -9,8 +9,8 @@ const codes={material:'txcd_fixture',delivery:'txcd_fixture',fuel:'txcd_fixture'
 const response=()=>({headers:{},setHeader(k,v){this.headers[k]=v},status(code){this.code=code;return this},json(body){this.body=body;return this}});
 test('server uses published prices and charges delivery per load, ignoring injected prices',()=>{
  const input=base();input.items=[{material:0,tons:22,price:1},{material:8,tons:11,price:0}];
- const order=validateOrder(input),{parameters:p}=buildSession(order,codes);
- assert.equal(p.line_items.reduce((s,l)=>s+l.price_data.unit_amount*l.quantity,0),132600);
+ const order=validateOrder(input),{parameters:p}=buildSession(order,codes,ORIGIN,{quoteReference:'JDG-UNIT-QUOTE',deliveries:[[0],[1]]});
+ assert.equal(p.line_items.reduce((s,l)=>s+l.price_data.unit_amount*l.quantity,0),142600);
  assert.equal(p.line_items.length,6);assert.equal(p.line_items[3].price_data.unit_amount,19800);
  assert.equal(p.metadata.dispatch_status,'hold_for_jdg_approval');assert.equal(p.payment_intent_data.metadata.dispatch_status,'hold_for_jdg_approval');
  assert.equal(p.payment_method_options.card.request_three_d_secure,'any');assert.equal(p.payment_method_types,undefined);assert.equal(p.automatic_tax.enabled,true);
@@ -21,9 +21,10 @@ test('invalid loads, service areas and missing acknowledgment are rejected',()=>
  for(const patch of [{items:[]},{items:Array(31).fill({material:0,tons:22})},{county:'Orange'},{zip:'12345'},{accepted:false},{date:'2026-02-30'},{requestId:'x'}])assert.throws(()=>validateOrder({...base(),...patch}));
 });
 test('idempotency stays stable on retry and changes when the order changes',()=>{
- const a=buildSession(validateOrder(base()),codes),b=buildSession(validateOrder(base()),codes);
+ const plan={quoteReference:'JDG-UNIT-QUOTE',deliveries:[[0]]};
+ const a=buildSession(validateOrder(base()),codes,ORIGIN,plan),b=buildSession(validateOrder(base()),codes,ORIGIN,plan);
  assert.equal(a.idempotencyKey,b.idempotencyKey);
- assert.notEqual(a.idempotencyKey,buildSession(validateOrder({...base(),zip:'33301'}),codes).idempotencyKey);
+ assert.notEqual(a.idempotencyKey,buildSession(validateOrder({...base(),zip:'33301'}),codes,ORIGIN,plan).idempotencyKey);
 });
 test('catalog matches the currently published frontend',()=>{
  const html=require('node:fs').readFileSync('index.html','utf8');

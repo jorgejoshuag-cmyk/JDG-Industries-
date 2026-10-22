@@ -21,7 +21,11 @@ The `main` branch deploys through the existing GitHub/Vercel connection. Product
 
 The brand remains JDG Aggregates. The website palette is white, black and navy; full color is reserved for the American flag.
 
-September 2026 customer material prices exclude delivery, fuel, tax, and additional jobsite charges. Confirm prices before changing them. The quote form opens the visitor's email or messaging app; the visitor must send the request there. The cart stores only material IDs and quantities in the visitor’s browser. Each line represents a separate load of up to 22 tons; delivery and fuel are calculated per load. The payment backend is implemented but disabled until the credentials, webhook and confirmed tax configuration are installed. No automatic order booking or dispatch is implemented. Never claim that live payments are active before the complete checkout has been verified.
+September 2026 customer material prices are preserved and exclude delivery, fuel, tax, and additional jobsite charges. The approved new standard is $195 delivery plus $45 fuel per actual delivery in Miami-Dade and Broward, equally for half and full trucks. Outlying northern Broward or southern Miami-Dade jobsites may require an additional quoted fuel surcharge; no automatic boundary or amount has been approved. Previously issued proposals are unchanged.
+
+The quote form opens the visitor's email or messaging app; the visitor must send the request there. The cart stores material IDs, quantities and a numeric requested delivery count. That planning count is separate from material rows; JDG must confirm the actual grouping, capacity, jobsite and final quote before payment. Every material and quantity is retained in the quote request. Customer flags or a selected county/ZIP cannot approve payment.
+
+This pricing review branch deliberately blocks all new Stripe sessions until an authenticated JDG quote-approval workflow is implemented and reviewed, as well as the credentials, signed webhook and confirmed tax setup. The existing merchant, payment-verification and dispatch safeguards remain. See `CHECKOUT-SETUP.md` for prerequisites. No automatic booking or dispatch is implemented. This draft is separate from the unapproved parent-brand redesign and is not a production release.
 
 Only public website assets belong here. Do not commit credentials, supplier cost sheets, private reports, customer requests, or environment files.
 

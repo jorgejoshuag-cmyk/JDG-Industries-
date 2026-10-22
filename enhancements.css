@@ -64,5 +64,6 @@ body{line-height:1.6}button:disabled{opacity:.5;cursor:not-allowed;transform:non
 .checkout-pay{width:100%;font-size:16px;text-transform:none;letter-spacing:0}
 .checkout-error{border-left:3px solid #0a1e3c;background:#f1f4f8;padding:12px;font-size:15px;line-height:1.5}
 .checkout-alternative{border-top:1px solid var(--line);margin-top:24px;padding-top:20px;display:flex;gap:16px;flex-wrap:wrap;font-size:14px}
+#checkout-dialog .checkout-alternative button{position:static;width:auto;height:auto;font-size:14px}
 .cart-actions{flex-wrap:wrap}.cart-actions .btn{font-size:14px;text-transform:none;letter-spacing:0}
 @media(max-width:480px){#checkout-dialog{padding:22px 18px}.checkout-form{gap:14px}.purchase-actions .btn{min-height:46px}.checkout-alternative{display:grid}.cart-actions{display:grid;grid-template-columns:1fr}.cart-actions .btn{width:100%}}

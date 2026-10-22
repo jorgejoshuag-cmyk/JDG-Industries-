@@ -5,9 +5,10 @@ let availabilityVersion=0;
 function showCheckoutError(message){$('checkout-error').textContent=message;$('checkout-error').hidden=!message}
 function setCheckoutBusy(busy){checkoutBusy=busy;$('checkout-submit').disabled=busy||!checkoutReady;$('checkout-submit').textContent=busy?'Opening secure checkout…':'Continue to secure payment'}
 function checkoutSummary(){
- const container=$('checkout-summary');container.replaceChildren();let total=0;
- checkoutItems.forEach((item,i)=>{const p=document.createElement('p'),product=products[item.material],cost=product.price*item.tons+deliveryFor(item.tons)+25;total+=cost;p.textContent=`Load ${i+1}: ${item.tons} tons of ${product.name} · ${money(cost)}`;container.append(p)});
- const summary=document.createElement('strong');summary.textContent=`Subtotal ${money(total)} before sales tax`;container.append(summary);
+ const container=$('checkout-summary');container.replaceChildren();let material=0;
+ checkoutItems.forEach((item,i)=>{const p=document.createElement('p'),product=products[item.material],cost=product.price*item.tons;material+=cost;p.textContent=`Material ${i+1}: ${item.tons} tons of ${product.name} · ${money(cost)} material`;container.append(p)});
+ const count=checkoutUsesCart?cartDeliveryCount():1,fees=document.createElement('p');fees.textContent=`${count} requested delivery${count===1?'':'s'}: ${money(195*count)} delivery + ${money(45*count)} fuel. JDG must confirm the actual delivery plan and any outlying-area surcharge before payment.`;container.append(fees);
+ const summary=document.createElement('strong');summary.textContent=`Estimated subtotal ${money(material+240*count)} before sales tax and additional charges`;container.append(summary);
 }
 async function openCheckout(items,usesCart=false){
  if(!items.length)return;
@@ -23,7 +24,7 @@ async function openCheckout(items,usesCart=false){
   checkoutReady=state.ready===true;
  }catch{if(version!==availabilityVersion)return;checkoutReady=false}
  checkoutForm.hidden=!checkoutReady;$('checkout-wallets').hidden=!checkoutReady;
- $('checkout-availability').textContent=checkoutReady?'Enter your delivery area, then choose your payment method at Stripe.':'Online payment is not available yet. Keep your load selection and request an estimate, or call JDG to arrange your order.';
+ $('checkout-availability').textContent=checkoutReady?'Enter your delivery area, then choose your payment method at Stripe.':'Request a quote before payment. JDG must review the actual jobsite and confirm the delivery count and any additional fuel surcharge for outlying northern Broward or southern Miami-Dade. Your material selection is kept below.';
  setCheckoutBusy(false);
  if(checkoutReady)$('checkout-county').focus();
 }
@@ -47,7 +48,7 @@ checkoutForm.addEventListener('input',()=>{if(!checkoutBusy)checkoutRequestId=cr
 checkoutForm.addEventListener('submit',async event=>{
  event.preventDefault();if(checkoutBusy||!checkoutReady||!checkoutForm.reportValidity())return;
  setCheckoutBusy(true);showCheckoutError('');
- const order={items:checkoutItems,county:$('checkout-county').value,zip:$('checkout-zip').value,date:$('checkout-date').value,accepted:$('checkout-accept').checked,requestId:checkoutRequestId};
+ const order={items:checkoutItems,requestedDeliveries:checkoutUsesCart?cartDeliveryCount():1,county:$('checkout-county').value,zip:$('checkout-zip').value,date:$('checkout-date').value,accepted:$('checkout-accept').checked,requestId:checkoutRequestId};
  try{
   const response=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(order),signal:AbortSignal.timeout(45000)});
   const result=await response.json();if(!response.ok)throw new Error(result.error||'Unable to start checkout. Please try again.');
