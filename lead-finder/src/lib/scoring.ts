@@ -6,12 +6,12 @@ export type ScoreInput = {
   trade: string;
   county: string | null;
   zip: string | null;
-  /** Miles from the yard, or null when the lead has no coordinates. */
+  /** Miles from the yard to the nearest known jobsite or office, or null when there are no coordinates. */
   distanceMiles: number | null;
   hasPhone: boolean;
   hasEmail: boolean;
   hasNamedContact: boolean;
-  projects: { type: string; declaredValue: number | null; issueDate: Date | null; active: boolean }[];
+  projects: { type: string; declaredValue: number | null; issueDate: Date | null; active: boolean; county?: string | null }[];
   activityOutcomes: string[];
   serviceCounties: string[];
   serviceZips: string[];
@@ -57,6 +57,7 @@ const PROJECT_FIT: Record<string, number> = {
   Paving: 1,
   "Site Work": 1,
   "New Construction": 0.9,
+  Addition: 0.8,
   "Public Bid": 0.9,
   Pool: 0.8,
   Demolition: 0.5,
@@ -75,6 +76,9 @@ const EVALUATORS: Record<string, (i: ScoreInput, now: Date) => Frac> = {
   trade_fit: (i) => ({ fraction: TRADE_FIT[i.trade] ?? 0.2, detail: i.trade }),
 
   service_area: (i) => {
+    // Where the work is matters more than where the office is.
+    const job = i.projects.find((p) => p.county && i.serviceCounties.includes(p.county));
+    if (job) return { fraction: 1, detail: `Has a job in ${job.county} County` };
     if (i.county && i.serviceCounties.includes(i.county)) return { fraction: 1, detail: `${i.county} County` };
     if (i.zip && i.serviceZips.includes(i.zip)) return { fraction: 1, detail: `ZIP ${i.zip} is on the service list` };
     if (!i.county && !i.zip) return { fraction: 0.3, detail: "Location unknown" };

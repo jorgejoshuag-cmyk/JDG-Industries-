@@ -104,7 +104,11 @@ export function parseNumber(input: string | null | undefined): number | null {
 
 export function parseDate(input: string | null | undefined): Date | null {
   if (!input) return null;
-  const d = new Date(input);
+  const s = String(input).trim();
+  // A bare number such as "12" is not a date (JavaScript would read it as a month).
+  if (/^\d{1,10}$/.test(s)) return null;
+  // ArcGIS services send dates as milliseconds since 1970.
+  const d = /^\d{11,14}$/.test(s) ? new Date(Number(s)) : /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(`${s}T12:00:00Z`) : new Date(s);
   if (Number.isNaN(d.getTime())) return null;
   const y = d.getFullYear();
   return y >= 1990 && y <= 2100 ? d : null;

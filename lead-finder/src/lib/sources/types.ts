@@ -39,23 +39,33 @@ export type JsonSourceConfig = {
   kind: "json";
   enabled: boolean;
   /**
-   * HTTPS endpoint returning JSON. May contain {limit} and {offset} placeholders for paging,
-   * e.g. https://data.example.gov/resource/abcd-1234.json?$limit={limit}&$offset={offset}
+   * HTTPS endpoint returning JSON. Placeholders: {limit} and {offset} for paging, and {since}
+   * (a YYYY-MM-DD date, `lookbackDays` before today) to ask the source for recent records only.
    */
   url: string;
   /** Extra request headers, e.g. an app token. Never put secrets you would not want an admin to see. */
   headers: Record<string, string>;
   /** Dot path to the array of records in the response. Empty string when the response is the array. */
   recordsPath: string;
-  /** Our field name → dot path of the value inside one source record. */
+  /**
+   * Our field name → dot path of the value inside one source record.
+   * Join several columns with "+", e.g. "attributes.ScopeofWork+attributes.WorkItems".
+   */
   fieldMap: Record<string, string>;
   pageSize: number;
   maxPages: number;
+  /** How far back {since} reaches. Re-reading the same permits is harmless: they are updated, not duplicated. */
+  lookbackDays: number;
   /** Used when the source has no trade / project type column. Empty = classify from text. */
   defaultTrade: string;
   defaultProjectType: string;
-  /** Set when every record in this source is in one county. */
+  /** Set when every jobsite in this source is in one county / city. */
   defaultCounty: string;
+  defaultCity: string;
+  /** Contractor-name values that are not a business to sell to, e.g. OWNER, TO BE DETERMINED. */
+  skipNames: string[];
+  /** Shown on the Sources page: where the data comes from and what to know about it. */
+  note: string;
 };
 
 export type PlacesSourceConfig = {

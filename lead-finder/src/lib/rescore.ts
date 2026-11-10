@@ -16,6 +16,13 @@ export async function loadScoreContext(): Promise<Ctx> {
   };
 }
 
+/** Distance from the yard to the closest office or jobsite that has coordinates. */
+function nearestMiles(yard: { lat: number; lng: number } | null, points: { lat: number | null; lng: number | null }[]): number | null {
+  if (!yard) return null;
+  const miles = points.filter((p) => p.lat != null && p.lng != null).map((p) => distanceMiles(yard.lat, yard.lng, p.lat as number, p.lng as number));
+  return miles.length ? Math.min(...miles) : null;
+}
+
 const CLOSED = /closed|final|complete|expired|cancel|void/i;
 
 export async function rescoreCompanies(ids: string[], ctx?: Ctx) {
@@ -24,7 +31,7 @@ export async function rescoreCompanies(ids: string[], ctx?: Ctx) {
   const companies = await db.company.findMany({
     where: { id: { in: ids } },
     include: {
-      projects: { select: { type: true, declaredValue: true, issueDate: true, status: true } },
+      projects: { select: { type: true, declaredValue: true, issueDate: true, status: true, county: true, lat: true, lng: true } },
       contacts: { select: { id: true }, take: 1 },
       activities: { select: { outcome: true }, where: { outcome: { not: null } } },
     },
@@ -35,11 +42,11 @@ export async function rescoreCompanies(ids: string[], ctx?: Ctx) {
         trade: co.trade,
         county: co.county,
         zip: co.zip,
-        distanceMiles: c.yard && co.lat != null && co.lng != null ? distanceMiles(c.yard.lat, c.yard.lng, co.lat, co.lng) : null,
+        distanceMiles: nearestMiles(c.yard, [co, ...co.projects]),
         hasPhone: Boolean(co.phone),
         hasEmail: Boolean(co.email),
         hasNamedContact: co.contacts.length > 0,
-        projects: co.projects.map((p) => ({ type: p.type, declaredValue: p.declaredValue, issueDate: p.issueDate, active: !CLOSED.test(p.status ?? "") })),
+        projects: co.projects.map((p) => ({ type: p.type, declaredValue: p.declaredValue, issueDate: p.issueDate, active: !CLOSED.test(p.status ?? ""), county: p.county })),
         activityOutcomes: co.activities.map((a) => a.outcome as string),
         serviceCounties: c.counties,
         serviceZips: c.zips,

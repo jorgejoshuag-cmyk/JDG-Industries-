@@ -31,6 +31,7 @@ export const TRADES = [
 
 export const PROJECT_TYPES = [
   "New Construction",
+  "Addition",
   "Foundation / Slab",
   "Driveway",
   "Paving",

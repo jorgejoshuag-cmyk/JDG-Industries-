@@ -22,7 +22,7 @@ export default async function SourcesPage() {
     <>
       <PageHeader title="Lead sources" subtitle="Sources that are turned on run automatically once a day. File import and manual entry are always available and need no setup." />
       <div className="card mb-5 text-sm">
-        <p><strong>How to set up a source:</strong> find the official open-data dataset, copy its JSON endpoint here, and type in the dataset&apos;s own column names next to the fields you want. Use <code className="rounded bg-navy-50 px-1">{"{limit}"}</code> and <code className="rounded bg-navy-50 px-1">{"{offset}"}</code> in the URL if the dataset supports paging.</p>
+        <p><strong>How to set up a source:</strong> find the official open-data dataset, copy its JSON endpoint here, and type in the dataset&apos;s own column names next to the fields you want. Use <code className="rounded bg-navy-50 px-1">{"{limit}"}</code> and <code className="rounded bg-navy-50 px-1">{"{offset}"}</code> in the URL for paging, and <code className="rounded bg-navy-50 px-1">{"{since}"}</code> for a start date. The two Miami-Dade permit feeds are already set up.</p>
         <p className="muted mt-2">Only use official APIs and open-data portals whose terms allow this use. Do not point this at websites that prohibit automated access or require a login.</p>
       </div>
       <ul className="space-y-4">
@@ -32,6 +32,7 @@ export default async function SourcesPage() {
               <div>
                 <h2>{adapter.label}</h2>
                 <p className="muted">{adapter.description}</p>
+                {config.kind === "json" && config.note ? <p className="mt-1 max-w-3xl text-sm">{config.note}</p> : null}
                 <p className="mt-1 text-sm"><strong>{notReady ? `Not running: ${notReady}` : "Ready — runs daily"}</strong>{lastRun ? <span className="muted"> · last run {fmtDateTime(lastRun.startedAt)}: {lastRun.status}, found {lastRun.found}, added {lastRun.added}</span> : <span className="muted"> · never run</span>}</p>
               </div>
               <ActionForm action={runSourceNow}>
@@ -62,7 +63,10 @@ export default async function SourcesPage() {
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div><label htmlFor={`dt-${adapter.key}`}>Trade for every record</label><select id={`dt-${adapter.key}`} name="defaultTrade" defaultValue={config.defaultTrade} className="input"><option value="">Work it out from the text</option>{TRADES.map((t) => <option key={t}>{t}</option>)}</select></div>
                       <div><label htmlFor={`dp-${adapter.key}`}>Project type for every record</label><select id={`dp-${adapter.key}`} name="defaultProjectType" defaultValue={config.defaultProjectType} className="input"><option value="">Work it out from the text</option>{PROJECT_TYPES.map((t) => <option key={t}>{t}</option>)}</select></div>
-                      <div><label htmlFor={`dc-${adapter.key}`}>County for every record</label><input id={`dc-${adapter.key}`} name="defaultCounty" defaultValue={config.defaultCounty} maxLength={40} placeholder="e.g. Broward" className="input" /></div>
+                      <div><label htmlFor={`dc-${adapter.key}`}>Jobsite county for every record</label><input id={`dc-${adapter.key}`} name="defaultCounty" defaultValue={config.defaultCounty} maxLength={40} placeholder="e.g. Broward" className="input" /></div>
+                      <div><label htmlFor={`dcity-${adapter.key}`}>Jobsite city for every record</label><input id={`dcity-${adapter.key}`} name="defaultCity" defaultValue={config.defaultCity} maxLength={80} className="input" /></div>
+                      <div><label htmlFor={`lb-${adapter.key}`}>Look back (days)</label><input id={`lb-${adapter.key}`} name="lookbackDays" type="number" min={1} max={365} defaultValue={config.lookbackDays} className="input" /></div>
+                      <div><label htmlFor={`sk-${adapter.key}`}>Contractor names to skip (comma separated)</label><input id={`sk-${adapter.key}`} name="skipNames" defaultValue={config.skipNames.join(", ")} maxLength={2000} className="input" /></div>
                     </div>
                     <fieldset>
                       <legend className="text-sm font-medium text-navy-900">Column names in the dataset</legend>

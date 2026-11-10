@@ -20,6 +20,7 @@ export type MaterialEstimate = {
 
 export const DEFAULT_ASSUMPTIONS: Assumption[] = [
   { projectType: "New Construction", material: "Fill sand, limerock base, ready-mix concrete", depthInches: 8, tonsPerCubicYard: 1.4, tonsPer10kValue: 4 },
+  { projectType: "Addition", material: "Fill sand, ready-mix concrete", depthInches: 6, tonsPerCubicYard: 1.5, tonsPer10kValue: 4 },
   { projectType: "Foundation / Slab", material: "Fill sand, ready-mix concrete", depthInches: 6, tonsPerCubicYard: 1.5, tonsPer10kValue: 8 },
   { projectType: "Driveway", material: "Limerock base, ready-mix concrete", depthInches: 8, tonsPerCubicYard: 1.4, tonsPer10kValue: 12 },
   { projectType: "Paving", material: "Limerock road base", depthInches: 8, tonsPerCubicYard: 1.4, tonsPer10kValue: 15 },

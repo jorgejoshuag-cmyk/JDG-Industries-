@@ -12,6 +12,7 @@ root `.vercelignore` so the public site does not publish it.
 | Area | What it does |
 | --- | --- |
 | Today | New hot leads, your tasks due, leads with no contact in 14 days |
+| New permits | Recently issued permits needing concrete or aggregate, with the contractor on each; "Scan now" button |
 | Leads | Ranked, filterable list; saved filters; bulk assign / stage / tag; CSV export |
 | Lead page | Contacts, projects with rough material estimates, map, score breakdown, activity, tasks, outreach drafts |
 | Pipeline | Drag-and-drop board: New → Researched → Contacted → Conversation → Quote Sent → Won / Lost |
@@ -68,13 +69,37 @@ fix is to move this folder into its own repository.
 | Admin → Templates | Wording and materials | The seeded templates name materials you may not carry |
 | `src/lib/constants.ts` | Trade and project-type lists | Edit if your customer types differ |
 
-### Lead sources (each needs a one-time look-up)
+### Permit scanning (works out of the box)
 
-No external endpoint is pre-filled. Dataset addresses and column names change, so each must be found
-and confirmed by a person, then entered at **Admin → Sources** (or in `src/lib/sources/config.ts`).
-Until then the source is skipped and the app works on imports and manual entry.
+The **New permits** page lists recently issued permits for work that needs concrete, base rock or fill,
+with the contractor on each one. "Scan for new permits" reads the feeds on demand; they also run daily.
 
-- [ ] **Building permits** — JSON endpoint and column names from the county / city open-data portals
+| Feed | Covers | Gives you | Status |
+| --- | --- | --- | --- |
+| Miami-Dade County | Permits issued by the County (unincorporated areas, county-jurisdiction work) | Contractor name, license, address, **phone**, job value, square footage | On. Updated by the County about weekly |
+| City of Miami | Permits issued by the City's Building Department | Contractor name and address, job value, jobsite coordinates. **No phone** | On. Reloaded daily by the City |
+| Fort Lauderdale | City permits | — | **Off.** The City's feed had no records newer than March 2026 when checked in November 2026 |
+
+What is kept: new buildings, additions, foundations and shells, pools, driveways, paving and pavers,
+demolition, seawalls and docks, site utilities and soil work. What is dropped: owner-builder permits,
+and sub-permits pulled by electricians, A/C, roofing, window, fence and similar trades.
+
+**Broward is not covered automatically.** No Broward city or the County publishes a live open permit
+feed that could be found (Fort Lauderdale's stopped updating). Broward permits are issued by each
+city, mostly through portals with no open data. Options: export issued permits from a city's portal
+(or request them from the building department) and load the file with **Import**, or add a feed at
+Admin → Sources → "Permits — another feed" if a city starts publishing one. Many Broward-based
+contractors still appear because they pull permits in Miami-Dade.
+
+Likewise, Miami-Dade cities other than Miami (Hialeah, Miami Beach, Doral, Homestead and so on) issue
+their own permits and are not in these two feeds.
+
+The feeds were checked against live data in November 2026: about 900 relevant permits from roughly
+450 contractors in a 45-day window. If a feed changes its column names, a run fails with the feed's own
+error message under Admin → Logs, and the mapping can be corrected at Admin → Sources.
+
+### Other lead sources (each needs a one-time look-up)
+
 - [ ] **Contractor licenses** — state licensee data; if only downloadable files exist, use Import
 - [ ] **Public bids** — a JSON feed from the procurement portals you are registered with
 - [ ] **New business registrations** — state corporation data; if only files exist, use Import
@@ -135,13 +160,14 @@ source URLs must be public HTTPS addresses; CSV exports neutralise spreadsheet f
 
 ## Tested
 
-- `npm test`: 45 unit tests covering name/phone normalization, duplicate matching, scoring, material
-  estimates, CSV column mapping, do-not-contact enforcement and template rendering.
+- `npm test`: 59 unit tests covering name/phone normalization, duplicate matching, scoring, material
+  estimates, CSV column mapping, do-not-contact enforcement, template rendering and permit-feed handling.
+- The two Miami-Dade permit feeds were run live end to end (fetch, filter, de-duplicate, score, display).
 - A browser run against a production build covering sign-in, every page, filters, bulk actions, quick
   add, merge-on-add, projects and estimates, drafts, opt-out blocking, export, pipeline moves, file
   import, duplicate merge, admin forms, role restrictions and phone layout.
-- Not tested: live external sources (none are configured), the Google Places and OpenAI calls (no
-  keys), Excel upload in a browser (CSV was), and a Vercel deployment.
+- Not tested: the Google Places and OpenAI calls (no keys), Excel upload in a browser (CSV was), and a
+  Vercel deployment (including the daily scheduled scan there).
 
 ## Known issues
 

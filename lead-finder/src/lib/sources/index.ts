@@ -7,7 +7,10 @@ import type { LeadSourceAdapter, NormalizedRecord, SourceConfig } from "./types"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const ADAPTERS: LeadSourceAdapter<any, any>[] = [
-  jsonApiAdapter("permits", "Building permits", "New construction, driveway, paving, pool, slab, site work and demolition permits from county and city open-data portals."),
+  jsonApiAdapter("permits_miami_dade", "Permits — Miami-Dade County", "Recently issued County building permits for new buildings, additions, pools, paving, demolition and site work."),
+  jsonApiAdapter("permits_city_miami", "Permits — City of Miami", "Recently issued City of Miami permits for new construction, pools, driveways, paving, demolition and seawalls."),
+  jsonApiAdapter("permits_fort_lauderdale", "Permits — Fort Lauderdale (Broward)", "City of Fort Lauderdale permits. Off by default because the City's feed stopped updating in March 2026."),
+  jsonApiAdapter("permits", "Permits — another feed", "A blank slot for one more permit feed, for example a Broward city that publishes one."),
   jsonApiAdapter("licenses", "Contractor licenses", "State contractor license records for the service-area counties."),
   jsonApiAdapter("bids", "Public bids", "Government solicitations that need aggregate, concrete, paving or site work."),
   jsonApiAdapter("registrations", "New business registrations", "Newly formed construction-related companies."),
@@ -28,7 +31,9 @@ export async function getSourceConfig(key: string): Promise<SourceConfig> {
   const row = await db.setting.findUnique({ where: { key: `source:${key}` } });
   if (!row) return base;
   try {
-    return { ...base, ...JSON.parse(row.value), kind: base.kind } as SourceConfig;
+    const stored = JSON.parse(row.value);
+    // Settings saved before a field existed fall back to the default for that field.
+    return { ...base, ...stored, kind: base.kind } as SourceConfig;
   } catch {
     return base;
   }
@@ -61,10 +66,10 @@ export async function runSource(key: string): Promise<RunSummary> {
       else unusable++;
     }
     const result = await ingestRecords(key, records);
-    const errorCount = result.errors.length + unusable;
+    const errorCount = result.errors.length;
     const message = [
       result.review ? `${result.review} possible duplicate(s) sent to review` : "",
-      unusable ? `${unusable} record(s) had no company name` : "",
+      unusable ? `${unusable} record(s) skipped (no contractor named, owner-builder, or a trade that does not buy material)` : "",
       result.errors[0] ?? "",
     ].filter(Boolean).join("; ") || null;
     await db.sourceRun.update({

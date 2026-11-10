@@ -10,7 +10,7 @@ import { normalizeCounty, normalizeZip } from "@/lib/normalize";
 import { rescoreAll } from "@/lib/rescore";
 import { requireAdmin, requireUser } from "@/lib/session";
 import { setSetting } from "@/lib/settings";
-import { MAPPABLE_FIELDS, SOURCE_DEFAULTS } from "@/lib/sources/config";
+import { MAPPABLE_FIELDS, PERMIT_SOURCE_KEYS, SOURCE_DEFAULTS } from "@/lib/sources/config";
 import { assertPublicHttpsUrl } from "@/lib/sources/http";
 import { getSourceConfig, runSource, saveSourceConfig } from "@/lib/sources";
 import type { JsonSourceConfig, PlacesSourceConfig } from "@/lib/sources/types";
@@ -222,6 +222,10 @@ export async function saveSource(_: ActionState, fd: FormData): Promise<ActionSt
       defaultTrade: String(fd.get("defaultTrade") ?? "").trim().slice(0, 80),
       defaultProjectType: String(fd.get("defaultProjectType") ?? "").trim().slice(0, 60),
       defaultCounty: String(fd.get("defaultCounty") ?? "").trim().slice(0, 40),
+      defaultCity: String(fd.get("defaultCity") ?? "").trim().slice(0, 80),
+      lookbackDays: Math.max(1, Math.min(365, Number(fd.get("lookbackDays")) || 45)),
+      skipNames: String(fd.get("skipNames") ?? "").split(",").map((v) => v.trim().slice(0, 60)).filter(Boolean).slice(0, 40),
+      note: base.note,
     };
     await saveSourceConfig(key, cfg);
   }
@@ -239,4 +243,20 @@ export async function runSourceNow(_: ActionState, fd: FormData): Promise<Action
   if (r.status === "failed") return fail(`Run failed: ${r.message}`);
   if (r.status === "skipped") return fail(`Not run: ${r.message}.`);
   return done(`Found ${r.found}, added ${r.added}, updated ${r.updated}.`);
+}
+
+/** Runs every permit feed that is turned on. Any signed-in user can start a scan; it only reads public permit data. */
+export async function scanPermits(_: ActionState, _fd: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const results = [];
+  for (const key of PERMIT_SOURCE_KEYS) results.push(await runSource(key));
+  const ran = results.filter((r) => r.status !== "skipped");
+  await audit(user.id, "source.scan_permits", "Source", null, results.map((r) => ({ key: r.sourceKey, status: r.status, found: r.found, added: r.added })));
+  if (!ran.length) return fail("No permit feed is turned on. An admin can turn one on under Admin → Sources.");
+  const failed = ran.filter((r) => r.status === "failed");
+  const found = ran.reduce((n, r) => n + r.found, 0);
+  const added = ran.reduce((n, r) => n + r.added, 0);
+  const updated = ran.reduce((n, r) => n + r.updated, 0);
+  if (failed.length === ran.length) return fail(`The scan failed: ${failed[0].message}`);
+  return done(`Scan finished: ${found} relevant permits read, ${added} new companies, ${updated} existing companies updated.${failed.length ? ` ${failed.length} feed(s) failed — see Admin → Logs.` : ""}`);
 }

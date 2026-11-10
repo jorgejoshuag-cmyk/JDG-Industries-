@@ -14,6 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ]);
   const items = [
     { href: "/", label: "Today" },
+    { href: "/permits", label: "New permits" },
     { href: "/leads", label: "Leads" },
     { href: "/pipeline", label: "Pipeline" },
     { href: "/tasks", label: "Tasks", badge: tasksDue },
