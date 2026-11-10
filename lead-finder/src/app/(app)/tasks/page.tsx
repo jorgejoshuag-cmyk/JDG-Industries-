@@ -50,7 +50,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 {tasks.map((t) => (
                   <tr key={t.id}>
                     <td className="font-medium">{t.title}</td>
-                    <td><Link href={`/leads/${t.company.id}`}>{t.company.name}</Link></td>
+                    <td><a href={`/leads/${t.company.id}`}>{t.company.name}</a></td>
                     <td className="whitespace-nowrap">{fmtDate(t.dueDate)}{!t.completedAt && t.dueDate < startOfToday ? <strong> · overdue</strong> : ""}</td>
                     <td className="hidden md:table-cell">{t.assignee?.name ?? "Unassigned"}</td>
                     <td className="text-right">

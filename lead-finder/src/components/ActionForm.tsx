@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { createContext, useContext, useRef, useState } from "react";
 import type { ActionState } from "@/lib/action-state";
+import { reloadWithFlash } from "./flash";
 import { useBusy } from "./useBusy";
 
 type Action = (prev: ActionState, formData: FormData) => Promise<ActionState>;
@@ -17,16 +17,15 @@ export function ActionForm({
   action,
   children,
   className,
-  resetOnSuccess = false,
   confirm,
 }: {
   action: Action;
   children: React.ReactNode;
   className?: string;
+  /** Kept for readability at call sites; the page reloads after a successful save, which clears the form. */
   resetOnSuccess?: boolean;
   confirm?: string;
 }) {
-  const router = useRouter();
   const ref = useRef<HTMLFormElement>(null);
   const [state, setState] = useState<ActionState>({});
   const [busy, run] = useBusy();
@@ -55,18 +54,18 @@ export function ActionForm({
             window.location.assign(result.redirectTo);
             return;
           }
-          setState(result);
           if (result.ok) {
-            if (resetOnSuccess) ref.current?.reset();
-            // Actions only save; the page is re-fetched here so it shows the new data.
-            router.refresh();
+            // Reload so the page shows the saved data; the message appears as a notice afterwards.
+            setLeaving(true);
+            reloadWithFlash(result.ok);
+            return;
           }
+          setState(result);
         });
       }}
     >
       <PendingContext.Provider value={busy || leaving}>{children}</PendingContext.Provider>
       {state.error ? <p role="alert" className="mt-2 rounded-md border border-black bg-white px-3 py-2 text-sm font-medium text-black">⚠ {state.error}</p> : null}
-      {state.ok ? <p role="status" className="mt-2 text-sm font-medium text-navy-600">✓ {state.ok}</p> : null}
     </form>
   );
 }

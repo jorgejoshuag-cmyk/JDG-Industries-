@@ -13,7 +13,8 @@
     "test": "vitest run",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma migrate deploy && prisma generate && next build"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -28,7 +29,7 @@
     "react": "^19.1.10",
     "react-dom": "^19.1.10",
     "read-excel-file": "^9.3.14",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.22",

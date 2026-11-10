@@ -9,7 +9,12 @@ export const authConfig = {
     authorized({ auth, request }) {
       const { pathname } = request.nextUrl;
       if (pathname.startsWith("/login")) return true;
-      return Boolean(auth?.user);
+      if (!auth?.user) return false;
+      // Convenience redirect only. Each admin page and action re-checks the role against the database.
+      if (pathname.startsWith("/admin") && (auth.user as { role?: string }).role !== "ADMIN") {
+        return Response.redirect(new URL("/", request.nextUrl));
+      }
+      return true;
     },
     jwt({ token, user }) {
       if (user) {

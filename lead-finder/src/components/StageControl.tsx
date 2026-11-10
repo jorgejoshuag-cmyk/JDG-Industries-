@@ -1,14 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { reloadWithFlash } from "./flash";
 import { useBusy } from "./useBusy";
 import { setStage } from "@/app/actions/leads";
 import { LOST_REASONS, STAGES, STAGE_LABELS } from "@/lib/constants";
 
 /** Stage picker that asks for a reason when a lead is marked Lost. */
 export function StageControl({ id, stage, lostReason }: { id: string; stage: string; lostReason: string | null }) {
-  const router = useRouter();
   const [value, setValue] = useState(stage);
   const [reason, setReason] = useState(lostReason ?? "");
   const [error, setError] = useState("");
@@ -19,7 +18,7 @@ export function StageControl({ id, stage, lostReason }: { id: string; stage: str
       setError("");
       const res = await setStage({ id, stage: next, lostReason: why });
       if (res.error) setError(res.error);
-      else router.refresh();
+      else reloadWithFlash("Stage updated.");
     });
 
   return (

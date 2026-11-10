@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { resolveDuplicate } from "@/app/actions/leads";
 import { ActionForm } from "@/components/ActionForm";
 import { Empty, PageHeader, StageBadge, TierBadge, fmtDate } from "@/components/ui";
@@ -14,7 +13,7 @@ function Card({ c, label }: { c: Side; label: string }) {
   return (
     <div className="rounded-lg border border-navy-100 p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-navy-600">{label}</p>
-      <Link href={`/leads/${c.id}`} className="font-semibold text-navy-900">{c.name}</Link>
+      <a href={`/leads/${c.id}`} className="font-semibold text-navy-900">{c.name}</a>
       <div className="mt-1 flex gap-2"><TierBadge tier={c.tier} score={c.score} /><StageBadge stage={c.stage} /></div>
       <dl className="mt-2 space-y-0.5 text-sm">
         <div><dt className="muted inline">Trade: </dt><dd className="inline">{c.trade}</dd></div>

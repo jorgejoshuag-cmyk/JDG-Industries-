@@ -1,4 +1,5 @@
 import { logout } from "@/app/actions/auth";
+import { Flash } from "@/components/flash";
 import { Nav } from "@/components/Nav";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/session";
@@ -38,6 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main className="px-4 py-5 md:ml-56 md:px-8 md:py-7">
         <div className="mx-auto max-w-6xl">{children}</div>
       </main>
+      <Flash />
     </div>
   );
 }

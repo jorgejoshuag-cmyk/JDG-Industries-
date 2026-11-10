@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useState } from "react";
+import { reloadWithFlash } from "./flash";
 import { useBusy } from "./useBusy";
 import { bulkUpdate } from "@/app/actions/leads";
 import { STAGES, STAGE_LABELS } from "@/lib/constants";
@@ -14,7 +13,6 @@ export type LeadRow = {
 };
 
 export function LeadsTable({ rows, users }: { rows: LeadRow[]; users: { id: string; name: string }[] }) {
-  const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [op, setOp] = useState("assign");
   const [value, setValue] = useState("");
@@ -32,11 +30,8 @@ export function LeadsTable({ rows, users }: { rows: LeadRow[]; users: { id: stri
   const apply = () =>
     start(async () => {
       const res = await bulkUpdate({ ids: [...selected], op, value });
+      if (res.ok) return reloadWithFlash(res.ok);
       setMessage(res);
-      if (res.ok) {
-        setSelected(new Set());
-        router.refresh();
-      }
     });
 
   return (
@@ -92,7 +87,7 @@ export function LeadsTable({ rows, users }: { rows: LeadRow[]; users: { id: stri
               <tr key={r.id} className={selected.has(r.id) ? "bg-navy-50" : undefined}>
                 <td><input type="checkbox" aria-label={`Select ${r.name}`} checked={selected.has(r.id)} onChange={() => toggle(r.id)} /></td>
                 <td>
-                  <Link href={`/leads/${r.id}`} className="font-medium text-navy-900">{r.name}</Link>
+                  <a href={`/leads/${r.id}`} className="font-medium text-navy-900">{r.name}</a>
                   <div className="muted">{r.trade}</div>
                   <div className="mt-0.5 flex flex-wrap gap-1">
                     {r.doNotContact ? <Flag>Do not contact</Flag> : null}

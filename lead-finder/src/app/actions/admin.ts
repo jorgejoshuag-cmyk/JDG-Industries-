@@ -207,7 +207,7 @@ export async function saveSource(_: ActionState, fd: FormData): Promise<ActionSt
     const rawHeaders = String(fd.get("headers") ?? "").trim();
     if (rawHeaders) {
       try {
-        const parsed = z.record(z.string().max(500)).parse(JSON.parse(rawHeaders));
+        const parsed = z.record(z.string().max(100), z.string().max(500)).parse(JSON.parse(rawHeaders));
         headers = parsed;
       } catch {
         return fail('Headers must be JSON like {"X-App-Token": "abc"}.');

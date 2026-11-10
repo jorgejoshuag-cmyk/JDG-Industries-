@@ -11,8 +11,8 @@ export const fail = (error: string): ActionState => ({ error });
 export const done = (ok = "Saved."): ActionState => ({ ok });
 
 /** First readable message from a zod error. */
-export function zodMessage(e: { issues: { path: (string | number)[]; message: string }[] }): string {
+export function zodMessage(e: { issues: { path: PropertyKey[]; message: string }[] }): string {
   const i = e.issues[0];
-  return i ? `${i.path.join(".") || "Input"}: ${i.message}` : "Invalid input.";
+  return i ? `${i.path.map(String).join(".") || "Input"}: ${i.message}` : "Invalid input.";
 }
 export const goTo = (redirectTo: string): ActionState => ({ redirectTo });

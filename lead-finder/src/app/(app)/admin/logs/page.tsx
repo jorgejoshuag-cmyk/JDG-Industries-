@@ -53,7 +53,7 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
                 {logs.map((l) => (
                   <tr key={l.id}>
                     <td className="whitespace-nowrap">{fmtDateTime(l.createdAt)}</td><td>{l.user?.name ?? "System"}</td><td><code>{l.action}</code></td>
-                    <td>{l.entity === "Company" && l.entityId ? <Link href={`/leads/${l.entityId}`}>Lead</Link> : l.entity}</td>
+                    <td>{l.entity === "Company" && l.entityId ? <a href={`/leads/${l.entityId}`}>Lead</a> : l.entity}</td>
                     <td className="max-w-md break-words font-mono text-xs">{l.detail ? JSON.stringify(l.detail).slice(0, 300) : ""}</td>
                   </tr>
                 ))}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { reloadWithFlash } from "./flash";
 import { useBusy } from "./useBusy";
 import { logActivity } from "@/app/actions/leads";
 import { generateDraft, personalizeDraft, type Draft } from "@/app/actions/outreach";
@@ -18,7 +18,6 @@ type Props = {
 const CHANNEL_LABEL: Record<string, string> = { EMAIL: "Email", TEXT: "Text", CALL: "Call script" };
 
 export function OutreachPanel({ companyId, templates, contacts, aiEnabled, addressMissing }: Props) {
-  const router = useRouter();
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
   const [contactId, setContactId] = useState(contacts[0]?.id ?? "");
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -70,11 +69,8 @@ export function OutreachPanel({ companyId, templates, contacts, aiEnabled, addre
         fd.set("followUpTitle", `Follow up on ${CHANNEL_LABEL[draft.channel].toLowerCase()}`);
       }
       const res = await logActivity({}, fd);
+      if (res.ok) return reloadWithFlash(res.ok);
       setMessage(res);
-      if (res.ok) {
-        setDraft(null);
-        router.refresh();
-      }
     });
 
   if (!templates.length) return <p className="muted">No active templates. An admin can add them under Admin → Templates.</p>;

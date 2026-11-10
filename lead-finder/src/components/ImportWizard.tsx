@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Papa from "papaparse";
 import { useMemo, useState } from "react";
@@ -36,7 +35,6 @@ async function parseFile(file: File): Promise<{ headers: string[]; rows: Row[] }
 }
 
 export function ImportWizard() {
-  const router = useRouter();
   const [fileName, setFileName] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
@@ -89,7 +87,6 @@ export function ImportWizard() {
     }
     setProgress(null);
     setResult(total);
-    router.refresh(); // updates the Duplicates badge in the menu
     setRows([]);
     setHeaders([]);
   };

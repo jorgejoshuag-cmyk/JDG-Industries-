@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { setStage } from "@/app/actions/leads";
@@ -9,30 +8,37 @@ import { TierBadge } from "./ui";
 
 export type BoardCard = { id: string; name: string; trade: string; city: string | null; tier: string; score: number; stage: StageKey; owner: string | null };
 
-export function PipelineBoard({ cards: initial, counts }: { cards: BoardCard[]; counts: Record<string, number> }) {
-  const router = useRouter();
+export function PipelineBoard({ cards: initial, counts: initialCounts }: { cards: BoardCard[]; counts: Record<string, number> }) {
   const [cards, setCards] = useState(initial);
+  const [counts, setCounts] = useState(initialCounts);
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [lost, setLost] = useState<{ id: string; reason: string } | null>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => setCards(initial), [initial]);
+  useEffect(() => {
+    setCards(initial);
+    setCounts(initialCounts);
+  }, [initial, initialCounts]);
 
   const move = (id: string, stage: StageKey, lostReason?: string) => {
     const card = cards.find((c) => c.id === id);
     if (!card || card.stage === stage) return;
     if (stage === "LOST" && !lostReason) return setLost({ id, reason: "" });
-    const previous = cards;
-    setCards(cards.map((c) => (c.id === id ? { ...c, stage } : c))); // optimistic
+    const from = card.stage;
+    const shift = (a: string, b: string) => setCounts((n) => ({ ...n, [a]: Math.max(0, (n[a] ?? 0) - 1), [b]: (n[b] ?? 0) + 1 }));
+    // Optimistic: show the move straight away, and put the card back if the save fails.
+    setCards((list) => list.map((c) => (c.id === id ? { ...c, stage } : c)));
+    shift(from, stage);
     setError("");
     // Not gated by a busy flag: several cards can be moved in quick succession.
     void (async () => {
       const res = await setStage({ id, stage, lostReason }).catch(() => ({ error: "Could not save. Try again." }) as { error?: string });
       if (res.error) {
-        setCards(previous);
+        setCards((list) => list.map((c) => (c.id === id ? { ...c, stage: from } : c)));
+        shift(stage, from);
         setError(res.error);
-      } else router.refresh();
+      }
     })();
   };
 
@@ -60,7 +66,7 @@ export function PipelineBoard({ cards: initial, counts }: { cards: BoardCard[]; 
               className={`w-64 shrink-0 rounded-lg border p-2 ${over === stage ? "border-navy-700 bg-navy-100" : "border-navy-100 bg-navy-50"}`}
               onDragOver={(e) => { e.preventDefault(); setOver(stage); }}
               onDragLeave={() => setOver((o) => (o === stage ? null : o))}
-              onDrop={(e) => { e.preventDefault(); setOver(null); if (dragId) move(dragId, stage); setDragId(null); }}
+              onDrop={(e) => { e.preventDefault(); setOver(null); const id = e.dataTransfer.getData("text/plain") || dragId; if (id) move(id, stage); setDragId(null); }}
             >
               <h2 className="mb-2 flex items-center justify-between px-1 text-sm">
                 {STAGE_LABELS[stage]}
@@ -76,7 +82,7 @@ export function PipelineBoard({ cards: initial, counts }: { cards: BoardCard[]; 
                     className={`cursor-grab rounded-md border border-navy-100 bg-white p-2 shadow-sm active:cursor-grabbing ${dragId === c.id ? "opacity-50" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-1">
-                      <Link href={`/leads/${c.id}`} className="text-sm font-medium leading-tight text-navy-900" draggable={false}>{c.name}</Link>
+                      <a href={`/leads/${c.id}`} className="text-sm font-medium leading-tight text-navy-900" draggable={false}>{c.name}</a>
                       <TierBadge tier={c.tier} score={c.score} />
                     </div>
                     <p className="muted text-xs">{c.trade} · {c.city ?? "—"}{c.owner ? ` · ${c.owner}` : ""}</p>
