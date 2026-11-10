@@ -1,0 +1,305 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SALES
+}
+
+enum Stage {
+  NEW
+  RESEARCHED
+  CONTACTED
+  CONVERSATION
+  QUOTE_SENT
+  WON
+  LOST
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  TEXT
+  NOTE
+  MEETING
+  QUOTE
+}
+
+enum Channel {
+  EMAIL
+  TEXT
+  CALL
+}
+
+enum DuplicateStatus {
+  PENDING
+  MERGED
+  DISMISSED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(SALES)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  companies    Company[]
+  activities   Activity[]
+  tasks        Task[]
+  savedFilters SavedFilter[]
+  auditLogs    AuditLog[]
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  key       String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}
+
+model Company {
+  id                String    @id @default(cuid())
+  name              String
+  normalizedName    String
+  trade             String    @default("Other")
+  licenseNumber     String?
+  address           String?
+  city              String?
+  county            String?
+  zip               String?
+  lat               Float?
+  lng               Float?
+  phone             String?
+  email             String?
+  website           String?
+  sources           String[]  @default([])
+  tags              String[]  @default([])
+  stage             Stage     @default(NEW)
+  lostReason        String?
+  score             Int       @default(0)
+  tier              String    @default("Cold")
+  scoreBreakdown    Json?
+  quoteValue        Float?
+  wonValue          Float?
+  doNotContact      Boolean   @default(false)
+  dncReason         String?
+  dncAt             DateTime?
+  likelyHomeowner   Boolean   @default(false)
+  lastContactedAt   DateTime?
+  sourceRetrievedAt DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  contacts   Contact[]
+  projects   Project[]
+  activities Activity[]
+  tasks      Task[]
+  dupAsA     DuplicateCandidate[] @relation("dupA")
+  dupAsB     DuplicateCandidate[] @relation("dupB")
+
+  @@index([normalizedName])
+  @@index([phone])
+  @@index([licenseNumber])
+  @@index([stage])
+  @@index([score])
+  @@index([tier])
+  @@index([county])
+  @@index([city])
+  @@index([zip])
+  @@index([trade])
+  @@index([ownerId])
+  @@index([lastContactedAt])
+  @@index([doNotContact, likelyHomeowner])
+}
+
+model Contact {
+  id               String   @id @default(cuid())
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name             String
+  title            String?
+  phone            String?
+  email            String?
+  preferredChannel Channel?
+  createdAt        DateTime @default(now())
+
+  @@index([companyId])
+}
+
+model Project {
+  id             String    @id @default(cuid())
+  companyId      String?
+  company        Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  source         String
+  externalId     String
+  type           String    @default("Other")
+  description    String?
+  address        String?
+  city           String?
+  county         String?
+  zip            String?
+  lat            Float?
+  lng            Float?
+  declaredValue  Float?
+  areaSqFt       Float?
+  issueDate      DateTime?
+  estimatedStart DateTime?
+  status         String?
+  estCubicYards  Float?
+  estTons        Float?
+  estNote        String?
+  retrievedAt    DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+
+  @@unique([source, externalId])
+  @@index([companyId])
+  @@index([issueDate])
+  @@index([county])
+  @@index([type])
+}
+
+model Activity {
+  id        String       @id @default(cuid())
+  companyId String
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      ActivityType
+  outcome   String?
+  body      String?
+  createdAt DateTime     @default(now())
+
+  @@index([companyId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assigneeId  String?
+  assignee    User?     @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  title       String
+  dueDate     DateTime
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([assigneeId, completedAt, dueDate])
+  @@index([companyId])
+}
+
+model OutreachTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  channel   Channel
+  subject   String?
+  body      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model SourceRun {
+  id         String    @id @default(cuid())
+  sourceKey  String
+  status     String    @default("running")
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  found      Int       @default(0)
+  added      Int       @default(0)
+  updated    Int       @default(0)
+  errorCount Int       @default(0)
+  message    String?
+
+  @@index([sourceKey, startedAt])
+}
+
+model ScoringRule {
+  key     String  @id
+  label   String
+  weight  Int
+  enabled Boolean @default(true)
+}
+
+model MaterialAssumption {
+  projectType      String @id
+  material         String
+  depthInches      Float
+  tonsPerCubicYard Float
+  tonsPer10kValue  Float
+}
+
+model ServiceZip {
+  zip    String  @id
+  city   String?
+  county String?
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model SavedFilter {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  query     String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model DuplicateCandidate {
+  id         String          @id @default(cuid())
+  companyAId String
+  companyA   Company         @relation("dupA", fields: [companyAId], references: [id], onDelete: Cascade)
+  companyBId String
+  companyB   Company         @relation("dupB", fields: [companyBId], references: [id], onDelete: Cascade)
+  reason     String
+  confidence Float
+  status     DuplicateStatus @default(PENDING)
+  createdAt  DateTime        @default(now())
+
+  @@unique([companyAId, companyBId])
+  @@index([status])
+}
+
+/// Permanent opt-out record. Survives deletion or merging of the company.
+model Suppression {
+  id        String   @id @default(cuid())
+  kind      String
+  value     String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@unique([kind, value])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+}
